@@ -9,18 +9,17 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
-public class testmain {
+public class Appmain {
 		
-	
 
-	 	
 	public static void main(String[] args) {
 			
-			String sensorCount = args[0];
-			String filepath = args[1];
-			DelsysSocket socket = new DelsysSocket();
-			socket.onStart();
 	
+			String filepath = args[0];
+			String optrList = args[1];
+			DelsysSocket socket = new DelsysSocket();
+			socket.onStart(filepath,optrList);
+			
 	}
 	
 	

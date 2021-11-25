@@ -28,15 +28,20 @@ public class DelsysSocket {
 	}
 	  
 	  
-	  public void onStart(){
-		  int [] sensorList = {0,1,2,3,4,5,6,7};
+	  public void onStart(String filepath,String optrList){
+		  String[] optrListArray = optrList.split(",");
+		  
+		  int [] sensorList = new int[optrListArray.length];
+		  for(int i =0;i<sensorList.length;i++) {
+			  sensorList[i] = i;
+		  }
 		  System.out.println("sensor -----------------");
 		  typeList = new String[sensorList.length];
 	        for(int j=0; j<sensorList.length; j++){
 	        	typeList[j]="D";
 	        }
 	        
-	      filter = new DelsysFilter(sensorList, typeList);
+	      filter = new DelsysFilter(sensorList, typeList,filepath,optrListArray);
 		  
 		  try {
 			commSock = new Socket(ip, 50040); // commands
@@ -87,18 +92,7 @@ public class DelsysSocket {
 	        Thread t1 = new Thread(r);
 	        t1.setPriority(Thread.MIN_PRIORITY); // Prioritize touch handling and screen updates above network communication.
 	        t1.start();
-	        /*
-	        t = new Thread(new Runnable() {
-	        	
-	        	
-	        	
-				public void run() {
-				
-					readBytes(sensor);
-				}
-			});
-			*/
-	        //t.start();
+	      
 	   
 	 	}
 	  }
@@ -135,9 +129,9 @@ public class DelsysSocket {
 			
 				try {
 					// Read a complete group of multiplexed samples
-					//emgSock.getInputStream().read(emgBytes, 0, EMG_BYTE_BUFFER);
+					emgSock.getInputStream().read(emgBytes, 0, EMG_BYTE_BUFFER);
 					//accSock.getInputStream().read(accBytes, 0, ACC_BYTE_BUFFER);
-					imemgSock.getInputStream().read(emgBytes, 0, ACC_BYTE_BUFFER);
+					//imemgSock.getInputStream().read(emgBytes, 0, ACC_BYTE_BUFFER);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

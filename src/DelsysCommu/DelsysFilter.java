@@ -49,7 +49,7 @@ public class DelsysFilter {
 	private long emgSampleIdx = 0;					// Current EMG sample number
 	
 	
-	public DelsysFilter(int[] sensorList, String[] typeList) {
+	public DelsysFilter(int[] sensorList, String[] typeList,String filepath,String[] optrListArray) {
 		//test classes
 		this.sensorList = sensorList;
 		bufferWriters = new ArrayList<BufferedWriter>();
@@ -96,7 +96,7 @@ public class DelsysFilter {
 		for(int ii = 0; ii <sensorList.length; ii++)
 		{
 			final int temp = sensorList[ii];
-			File csv = new File("C:\\Safety\\Dumy\\35\\"+temp+".csv");
+			File csv = new File(filepath+"\\"+optrListArray[ii]+".csv");
 			try {
 				bufferWriters.add(new BufferedWriter(new FileWriter(csv,true)));
 			} catch (IOException e) {
