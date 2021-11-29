@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class DelsysSocket {
 	  private DelsysFilter filter;
@@ -35,7 +36,6 @@ public class DelsysSocket {
 		  for(int i =0;i<sensorList.length;i++) {
 			  sensorList[i] = i;
 		  }
-		  System.out.println("sensor -----------------");
 		  typeList = new String[sensorList.length];
 	        for(int j=0; j<sensorList.length; j++){
 	        	typeList[j]="D";
@@ -49,15 +49,20 @@ public class DelsysSocket {
 			accSock = new Socket(ip, 50042); // ACC data
 			imemgSock = new Socket(ip, 50043); // ACC data
 	        PrintWriter writer = new PrintWriter(commSock.getOutputStream());
-	        writer.write("ENDIAN BIG\r\nSTART\r\n\r\n"); // request the start of data streaming
-	        writer.flush();
+	       
 	        // Read the reply
 	        BufferedReader reader = new BufferedReader(new InputStreamReader(commSock.getInputStream()));
-	        System.out.println(reader.readLine());
+	       
 	        String tmp;
+	        String command = "";
+
+	        
+	        writer.write("ENDIAN BIG\r\nSTART\r\n\r\n"); // request the start of data streaming
+	        writer.flush();
+	        
 	        while (!(tmp = reader.readLine()).contains("OK"))
 	        {
-
+	        	System.out.println("dddd--"+tmp);
 	        	if (tmp.contains("CANNOT COMPLETE"))
 	        	{
 	        		// Retry, the last activity may not have fully stopped 
@@ -72,6 +77,34 @@ public class DelsysSocket {
 	        	while (!reader.ready())
 	        		;
 	        }
+	        
+	        /*
+	        writer.write("SENSOR 1 TYPE?\r\n\r\n"); // request the start of data streaming
+			writer.flush();
+		    
+		      
+		        try {
+					while (true)
+					{	
+					
+						System.out.println(reader.readLine());
+						while (!reader.ready())
+			        		;
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			*/
+	        //sendCommandWithResponse(writer,reader,command);
+	        //System.out.println(command);
+	        //command = "SENSOR 1 SERIAL?\r\n\r\n";
+	        //System.out.println(command);
+	        //sendCommandWithResponse(writer,reader,command);
+	        
+	 
+	        
+	        
 		} catch (UnknownHostException e1) {
 			e1.printStackTrace();
 			// Notify the user of an error.
@@ -85,6 +118,7 @@ public class DelsysSocket {
 		}
         
 		// Launch a thread to read data from the TCP sockets.
+		  /*
 	 	for(int k =0;k<sensorList.length;k++) {
 	 		
 	        running = true;
@@ -95,15 +129,24 @@ public class DelsysSocket {
 	      
 	   
 	 	}
+	 	*/
+	 	
+
+		  running = true;
+	        Runnable r = new SocketRunnable(sensorList);
+	        Thread t1 = new Thread(r);
+	        t1.setPriority(Thread.MIN_PRIORITY); // Prioritize touch handling and screen updates above network communication.
+	        t1.start();
+	        
 	  }
 	  
-		private void readBytes(int sensor_num)
+		private void readBytes(int[] sensorList)
 		{
 			final int ACC_BYTE_BUFFER = 384 * 4;
 			// The number of bytes to read a complete set of data from all 16 sensors.
 	    	// The ratio 1728:384 maintains the 27:2 sample ratio and 16:48 channel ratio between EMG and ACC data.
 	    	final int EMG_BYTE_BUFFER = 1728 * 4;
-	    	System.out.println("Start readBytes "+sensor_num );
+	    	System.out.println("Start readBytes "+sensorList );
 	    	// Allocate space to store data incoming from the network.
 			byte[] emgBytes = new byte[EMG_BYTE_BUFFER];
 			byte[] accBytes = new byte[ACC_BYTE_BUFFER];
@@ -135,18 +178,21 @@ public class DelsysSocket {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-				
-				
+		
 				// Demultiplex, parse the byte array, and add the appropriate samples to the history buffer.
 				for (int i = 0; i < EMG_BYTE_BUFFER / 4; i++)
 				{
+					for(int sensor_num=0;sensor_num<sensorList.length;sensor_num++) {
 					if (i % 16 == sensor_num)
 					{
+						
+						
 						//float f = ByteBuffer.wrap(emgBytes, 4 * i, 4).getFloat();
 						float f = ByteBuffer.wrap(emgBytes, 4 * i, 4).getFloat();
-				
-						filter.addEmgSample(sensor_num,f * 1000); // convert V -> mV
-					
+
+						//filter.addEmgSample(sensor_num,f * 1000); // convert V -> mV
+						filter.sensorHistoryToOut(f * 1000,sensor_num); // convert V -> mV
+					}
 					}
 				}
 				
@@ -178,20 +224,40 @@ public class DelsysSocket {
 		}
 	  
 	  class SocketRunnable implements Runnable{
-		  private int socketNum = 0;
-		  public SocketRunnable(int socket_num) {
-			  this.socketNum = socket_num;
+		  private int [] sensorList ;
+		  public SocketRunnable(int [] sensorList) {
+			  this.sensorList = sensorList;
 			// TODO Auto-generated constructor stub
 		}
 		  
 		@Override
 		public void run() {
 			
-			readBytes(socketNum);
+			readBytes(sensorList);
 			// TODO Auto-generated method stub
 			
 		}
 		  
+	  }
+	  
+	  private void sendCommandWithResponse(PrintWriter writer, BufferedReader reader,String command) {
+		  String tmp = "";
+		  System.out.println(command);
+		  writer.write(command); // request the start of data streaming
+		  writer.flush();
+	        
+	        try {
+				while (!(tmp = reader.readLine()).contains("OK"))
+				{	
+					System.out.println("-----------------");
+					System.out.println(tmp);
+					while (!reader.ready())
+		        		;
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 	  }
 	
 	  

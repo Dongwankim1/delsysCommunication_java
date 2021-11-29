@@ -332,6 +332,7 @@ public class DelsysFilter {
 		while (true) {	
 
 			//all these used to be emgHistory
+			
 			while (sensorInGroup.get(filter_Num).size() < FS_half / 2) {
 				//Thread.yield();
 				try {
@@ -341,7 +342,7 @@ public class DelsysFilter {
 					e.printStackTrace();
 				}
 			}
-
+			
 			synchronized (this) {
 				
 				
